@@ -1,4 +1,4 @@
 *.log
 *test*
 Account.hpp
-*/obj
+*/*/obj
