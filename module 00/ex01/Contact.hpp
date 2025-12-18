@@ -9,24 +9,26 @@ class Contact {
 		std::string nickname;
 		std::string phoneNumber;
 		std::string darkSecret;
-		bool valideField(std::string str, std::string field, bool allowNumber);
+		bool valideField(std::string str, std::string field, bool allowNumber) const;
+		bool validePhoneNumber(std::string str) const;
 
 	public:
+		Contact(void);
 		Contact(std::string firstName, std::string lastName, std::string nickname, 
 			std::string phoneNumber, std::string darkSecret);
 
-		std::string getFirstName(void);
-		void setFirstName(std::string firstName);
+		std::string getFirstName(void) const;
+		bool setFirstName(std::string firstName);
 
-		std::string getLastName(void);
-		void setLastName(std::string lastName);
+		std::string getLastName(void) const;
+		bool setLastName(std::string lastName);
 
-		std::string getNickname(void);
-		void setNickname(std::string nickname);
+		std::string getNickname(void) const;
+		bool setNickname(std::string nickname);
 
-		std::string getPhoneNumber(void);
-		void setPhoneNumber(std::string phoneNumber);
+		std::string getPhoneNumber(void) const;
+		bool setPhoneNumber(std::string phoneNumber);
 
-		std::string getDarkSecret(void);
-		void setDarkSecret(std::string darkSecret);
+		std::string getDarkSecret(void) const;
+		bool setDarkSecret(std::string darkSecret);
 };

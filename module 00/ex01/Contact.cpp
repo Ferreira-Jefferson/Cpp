@@ -2,84 +2,99 @@
 #include "utils.hpp"
 #include <iostream>
 
-Contact::Contact(std::string fn, std::string ln, std::string nn, std::string pn, std::string ds): 
-	firstName(fn),
-	lastName(ln),
-	nickname(nn),
-	phoneNumber(pn),
-	darkSecret(ds)
-	{}
+Contact::Contact(void) {}
 
-bool Contact::valideField(std::string field, std::string fieldName, bool allowNumber) {
+Contact::Contact(std::string fn, std::string ln, std::string nn, std::string pn, std::string ds) { 
+	if (!valideField(trim(fn), "First Name", false) || !valideField(trim(ln), "Last Name", false) || 
+		valideField(trim(nn), "Nickname", true) || validePhoneNumber(trim(pn)) || valideField(trim(ds), "Dark Secret", true))
+			return ;
+	firstName = trim(fn);
+	lastName = trim(ln);
+	nickname = trim(nn);
+	phoneNumber = trim(pn);
+	darkSecret = trim(ds);
+}
+
+bool Contact::valideField(std::string field, std::string fieldName, bool allowNumber = false) const {
 	if (field.empty())
 	{
-		std::cout << "The field [" << fieldName << "] cannot be empty.";
+		std::cout << "The field [" << fieldName << "] cannot be empty." << std::endl;
 		return (false);
 	}
 	if (!allowNumber && hasNumber(field))
 	{
-		std::cout << "The field [" << fieldName << "] cannot has number.";
+		std::cout << "The field [" << fieldName << "] cannot has number." << std::endl;
 		return (false);
 	}
 	return (true);	
 }
 
-std::string Contact::getFirstName(void) {
+bool Contact::validePhoneNumber(std::string phoneNumber) const {
+	if (!isOnlyNumber(phoneNumber))
+	{
+		std::cout << "The field [" << "Phone Number" << "] expects only numbers." << std::endl;
+		return (false);
+	}
+	return (true);
+}
+
+std::string Contact::getFirstName(void) const {
 	return (this->firstName);
 }
 
-void Contact::setFirstName(std::string firstName) {
+bool Contact::setFirstName(std::string firstName) {
 	std::string fn = trim(firstName);
 	if (!this->valideField(firstName, "First Name", false))
-		return ;
+		return false;
 	this->firstName = fn;
+	return true;
 }
 
-
-std::string Contact::getLastName(void)  {
+std::string Contact::getLastName(void) const {
 	return (this->lastName);
 }
 
-void Contact::setLastName(std::string lastName) {
+bool Contact::setLastName(std::string lastName) {
 	std::string ln = trim(lastName);
 	if (!this->valideField(lastName, "Last Name", false))
-		return ;
+		return false;
 	this->lastName = ln;
+	return true;
 }
 
-std::string Contact::getNickname(void)  {
+std::string Contact::getNickname(void) const {
 	return (this->nickname);
 }
 
-void Contact::setNickname(std::string nickname)
+bool Contact::setNickname(std::string nickname)
 {
 	std::string nn = trim(nickname);
 	if (!this->valideField(nickname, "Nickname", true))
-		return ;
+		return false;
 	this->nickname = nn;
+	return true;
 }
 
-std::string Contact::getPhoneNumber(void)  {
+std::string Contact::getPhoneNumber(void) const {
 	return (this->phoneNumber);
 }
 
-void Contact::setPhoneNumber(std::string phoneNumber) {
+bool Contact::setPhoneNumber(std::string phoneNumber) {
 	std::string fn = trim(phoneNumber);
-	if (!isOnlyNumber(phoneNumber))
-	{
-		std::cout << "The field [" << "Phone Number" << "] expects only numbers.";
-		return ;
-	}
+	if (!validePhoneNumber(phoneNumber))
+		return false;
 	this->phoneNumber = fn;
+	return true;
 }
 
-std::string Contact::getDarkSecret(void)  {
+std::string Contact::getDarkSecret(void) const {
 	return (this->darkSecret);
 }
 
-void Contact::setDarkSecret(std::string darkSecret) {
+bool Contact::setDarkSecret(std::string darkSecret) {
 	std::string ds = trim(darkSecret);
 	if (!this->valideField(darkSecret, "Dark Secret", true))
-		return ;
+		return false;
 	this->darkSecret = ds;
+	return true;
 }
