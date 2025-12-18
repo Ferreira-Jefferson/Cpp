@@ -6,25 +6,19 @@
 
 PhoneBook::PhoneBook(void): index(0) {}
 
-void printLeftAligned(const std::string& text, int width, bool pipe = false) {
-	if (pipe)
-		std::cout << "|";
-    std::cout << std::right << std::setw(width) << text;
-}
-
 void PhoneBook::printReport(void) {
 	size_t qtt = index > 8 ? 8 : index;
+	int width = 10;
 
 	std::cout << "     Index|First Name| Last Name|  Nickname" << std::endl;
 	for (size_t i = 0; i < qtt; i++)
 	{
 		std::string index_str = "N";
 		index_str[0] = static_cast<char>('0' + i);
-		printLeftAligned(formatText(index_str), 10);
-		printLeftAligned(formatText(contacts[i].getFirstName()), 10, true);
-		printLeftAligned(formatText(contacts[i].getLastName()), 10, true);
-		printLeftAligned(formatText(contacts[i].getNickname()), 10, true);
-		std::cout << std::endl;
+		std::cout << std::right << std::setw(width) << formatText(index_str) << "|";
+		std::cout << std::right << std::setw(width) << formatText(contacts[i].getFirstName()) << "|";
+		std::cout << std::right << std::setw(width) << formatText(contacts[i].getLastName()) << "|";
+		std::cout << std::right << std::setw(width) << formatText(contacts[i].getNickname()) << std::endl;
 	}
 	std::cout << std::endl;
 }
