@@ -76,6 +76,8 @@ void PhoneBook::search(void) {
 		std::cout << "Enter the index of the desired contact [0-" << qtt-1 << "]." << std::endl;
 		if (!getline(std::cin, index_str))
 			break ;
+		if (!isdigit(static_cast<unsigned char>(index_str[0])))
+			continue ;
 		std::istringstream iss(index_str);
 		iss >> index_num;
 	
