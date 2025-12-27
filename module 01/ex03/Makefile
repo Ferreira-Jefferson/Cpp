@@ -1,10 +1,10 @@
-NAME=hi
+NAME=weapon
 
 CC		= c++
 CFLAGS	= -Wall -Werror -Wextra -std=c++98
 
 OBJS_FOLDER = ./obj/
-SRC			= main.cpp
+SRC			= main.cpp Weapon.cpp HumanA.cpp  HumanB.cpp
 OBJS		= $(addprefix $(OBJS_FOLDER), $(SRC:.cpp=.o))
 
 all: $(OBJS_FOLDER) $(NAME)

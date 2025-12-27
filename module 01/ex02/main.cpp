@@ -1,24 +1,40 @@
-#include "Weapon.hpp"
-#include "HumanA.hpp"
-#include "HumanB.hpp"
+#include <iostream>
 
-int main()
-{
-	{
-		Weapon club = Weapon("crude spiked club");
-		HumanA bob("Bob", club);
-		bob.attack();
-		club.setType("some other type of club");
-		bob.attack();
-	}
-	{
-		Weapon club = Weapon("crude spiked club");
-		HumanB jim("Jim");
-		jim.attack();
-		jim.setWeapon(club);
-		jim.attack();
-		club.setType("some other type of club");
-		jim.attack();	
-	}
-	return 0;
+int main(void) {
+	std::string base = "HI THIS IS BRAIN";
+	std::string test = "HI THIS NOT IS BRAIN";
+	std::string *stringPTR = &base;
+	std::string &stringREF = base;
+
+	std::cout << "Adress base:      " << &base << std::endl;
+	std::cout << "Adress stringPTR: " << stringPTR << std::endl;
+	std::cout << "Adress stringREF: " << &stringREF << std::endl;
+
+	std::cout << std::endl;
+
+	std::cout << "Value base:      " << base << std::endl;
+	std::cout << "Value stringPTR: " << *stringPTR << std::endl;
+	std::cout << "Value stringREF: " << stringREF << std::endl;
+
+	stringPTR = &test;
+	stringREF = test;
+
+	std::cout << std::endl;
+	
+	std::cout << "Adress base:      " << &base << std::endl;
+	std::cout << "Adress test:      " << &test << std::endl;
+	std::cout << "Adress stringPTR: " << stringPTR << std::endl;
+	std::cout << "Adress stringREF: " << &stringREF << std::endl;
+
+	test = "HI THIS NOT IS OTHER BRAIN";
+
+	std::cout << std::endl;
+
+	std::cout << "Value base:      " << base << std::endl;
+	std::cout << "Value test:      " << test << std::endl;
+	std::cout << "Value stringPTR: " << *stringPTR << std::endl;
+	std::cout << "Value stringREF: " << stringREF << std::endl;
+
+
+	return (0);
 }
