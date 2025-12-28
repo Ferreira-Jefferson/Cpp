@@ -4,7 +4,7 @@ CC		= c++
 CFLAGS	= -Wall -Werror -Wextra -std=c++98
 
 OBJS_FOLDER = ./obj/
-SRC			= main.cpp Replace.cpp File.cpp
+SRC			= main.cpp replace.cpp File.cpp
 OBJS		= $(addprefix $(OBJS_FOLDER), $(SRC:.cpp=.o))
 
 all: $(OBJS_FOLDER) $(NAME)
