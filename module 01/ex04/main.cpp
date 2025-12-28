@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
 {
 	if (argc < 4 || argc > 4)
 	{
-		std::cout << "./replace <file_name> <to_replace> <replacer>" << std::endl;
+		std::cout << "Expected: ./replace <file_name> <to_replace> <replacer>" << std::endl;
 		return (0);
 	}
 	
