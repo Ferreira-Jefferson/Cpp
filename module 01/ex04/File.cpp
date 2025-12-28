@@ -1,42 +1,39 @@
 #include "File.hpp"
 
-void File::open(std::fstream& file, std::string fileName, std::ios::openmode mode)
-{
-	file.open(fileName.c_str(), mode);
-	if (file.fail()) 
-		std::cout << fileName << " Error: The file could not be opened." << std::endl;
-}
+bool File::error = false;
 
 std::string File::read(std::string fileName)
 {
-	std::string line;
-	std::stringstream content;
-	std::fstream inFile;
-	open(inFile, fileName, std::ios::in);
-
-	if (inFile)
+	File::error = false;
+	std::string content;
+	std::ifstream inFile(fileName.c_str());
+	if (inFile.fail())
 	{
-		while (getline(inFile, line))
-			content << line << std::endl;
-		inFile.close();
+		std::cout << "Error: The file [" << fileName << "] could not be opened." << std::endl;
+		File::error = true;
+		return (content);
 	}
-	return (content.str());
+
+	char c;
+	while (inFile >> std::noskipws >> c)
+		content.push_back(c);
+
+	inFile.close();
+	return (content);
 }
 
 void File::write(std::string fileName, std::string& content)
 {
-	std::fstream outFile;
-	open(outFile, fileName, std::ios::out);
-
-	if (outFile)
+	if (File::error)
+		return ;
+	std::ofstream outFile(fileName.c_str());
+	if (outFile.fail())
 	{
-		outFile.write(content.c_str(), content.length());
-		outFile.close();
+		std::cout << "Error: The file [" << fileName << "] could not be opened." << std::endl;
+		File::error = true;
+		return ;
 	}
-}
 
-void close(std::fstream file)
-{
-	if (file)
-		file.close();
+	outFile.write(content.c_str(), content.length());
+	outFile.close();
 }
