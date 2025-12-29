@@ -1,7 +1,7 @@
 class Fixed {
 	private:
 		int _valueFixedPoint;
-		static const int _bits;
+		static const int _bits = 8;
 
 	public:
 		Fixed(void);
