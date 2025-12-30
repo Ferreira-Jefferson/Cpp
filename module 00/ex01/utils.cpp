@@ -44,9 +44,9 @@ bool isOnlyNumber(std::string str)
 }
 
 std::string toLowerStr(const std::string& s) {
-    std::string result = s;
-    for (size_t i = 0; i < result.size(); ++i) {
-        result[i] = static_cast<char>(std::tolower(static_cast<unsigned char>(result[i])));
-    }
-    return result;
+	std::string result = s;
+	for (size_t i = 0; i < result.size(); ++i) {
+		result[i] = static_cast<char>(std::tolower(static_cast<unsigned char>(result[i])));
+	}
+	return result;
 }
