@@ -1,7 +1,7 @@
-NAME=fixed-01
+NAME=fixed-02
 
 CC		= c++
-CFLAGS	= -Wall -Werror -Wextra -std=c++98
+CFLAGS	= -Wall -Werror -Wextra -std=c++98 -g
 
 OBJS_FOLDER = ./obj/
 SRC			=  main.cpp Fixed.cpp

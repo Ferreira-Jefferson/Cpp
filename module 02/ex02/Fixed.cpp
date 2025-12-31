@@ -2,6 +2,14 @@
 
 Fixed::Fixed(void): _valueFixedPoint(0) {}
 
+Fixed::~Fixed(void){
+	_valueFixedPoint = 0;
+}
+
+Fixed::Fixed(const Fixed& copy) {
+    *this = copy;
+}
+
 Fixed::Fixed(const int n) {
 	_valueFixedPoint = n << _bits;
 }
@@ -14,6 +22,7 @@ Fixed& Fixed::operator=(const Fixed& other) {
 	if (&other == this)
 		return (*this);
 	_valueFixedPoint = other.getRawBits();
+	return (*this);
 }
 
 int Fixed::getRawBits(void) const {
@@ -108,7 +117,7 @@ Fixed Fixed::operator/(const Fixed& other) const {
 	return result;
 }
 
-Fixed& Fixed::operator++() { 
+Fixed& Fixed::operator++(void) { 
 	_valueFixedPoint++;
 	return *this;
 }
@@ -130,18 +139,7 @@ Fixed Fixed::operator--(int) {
 	return temp;
 }
 
-Fixed& Fixed::min(Fixed& a, Fixed& b) {
-	return (a < b) ? a : b;
-}
-
-const Fixed& Fixed::min(const Fixed& a, const Fixed& b) {
-	return (a < b) ? a : b;
-}
-
-Fixed& Fixed::max(Fixed& a, Fixed& b) {
-	return (a > b) ? a : b;
-}
-
-const Fixed& Fixed::max(const Fixed& a, const Fixed& b) {
-	return (a > b) ? a : b;
+std::ostream& operator<<(std::ostream& out, const Fixed& fixed) {
+	out << fixed.toFloat();
+	return (out);
 }
