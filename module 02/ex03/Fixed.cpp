@@ -1,5 +1,7 @@
 #include "Fixed.hpp"
 
+const int Fixed::_bits = 8;
+
 std::ostream& operator<<(std::ostream& out, const Fixed& f) {
 	out << f.toFloat();
 	return (out);
