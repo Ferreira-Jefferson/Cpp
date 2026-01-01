@@ -1,5 +1,7 @@
 #include "Fixed.hpp"
 
+const int Fixed::_bits = 8;
+
 Fixed::Fixed(void): _valueFixedPoint(0) {}
 
 Fixed::~Fixed(void){
