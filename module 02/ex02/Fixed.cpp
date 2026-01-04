@@ -9,7 +9,7 @@ Fixed::~Fixed(void){
 }
 
 Fixed::Fixed(const Fixed& copy) {
-    *this = copy;
+	*this = copy;
 }
 
 Fixed::Fixed(const int n) {
