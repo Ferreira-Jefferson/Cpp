@@ -9,6 +9,11 @@ ClapTrap::ClapTrap(std::string name) : _name(name), _hitPoint(10), _energyPoint(
 	std::cout << "Constructor with name called for " << _name << std::endl;
 }
 
+ClapTrap::ClapTrap(const ClapTrap& other) {
+    *this = other;
+    std::cout << "ClapTrap copy constructor called" << std::endl;
+}
+
 ClapTrap::~ClapTrap(void) {
 	std::cout << "Destructor called for " << _name << std::endl;
 }
