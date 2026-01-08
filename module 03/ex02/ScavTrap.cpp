@@ -3,29 +3,29 @@
 #include <iostream>
 
 ScavTrap::ScavTrap() : ClapTrap() {
+	std::cout << "ScavTrap default constructor called" << std::endl;
 	setHitPoint(100);
 	setEnergyPoint(50);
 	setAttackDamage(20);
-	std::cout << "ScavTrap default constructor called" << std::endl;
 }
 
 ScavTrap::ScavTrap(std::string name) : ClapTrap(name) {
+	std::cout << "ScavTrap constructor called for " << getName() << std::endl;
 	setHitPoint(100);
 	setEnergyPoint(50);
 	setAttackDamage(20);
-	std::cout << "ScavTrap constructor called for " << getName() << std::endl;
 }
 
 ScavTrap::ScavTrap(const ScavTrap& other) : ClapTrap(other) {
-	*this = other;
 	std::cout << "ScavTrap copy constructor called" << std::endl;
+	*this = other;
 }
 
 ScavTrap& ScavTrap::operator=(const ScavTrap& other) {
+	std::cout << "ScavTrap assignment operator called" << std::endl;
 	if (this != &other) {
 		ClapTrap::operator=(other);
 	}
-	std::cout << "ScavTrap assignment operator called" << std::endl;
 	return *this;
 }
 
