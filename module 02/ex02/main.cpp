@@ -1,7 +1,7 @@
 #include "Fixed.hpp"
 
 int main(void) {
-	std::cout << "=== Teste de construtores ===" << std::endl;
+	std::cout << "=== Constructor tests ===" << std::endl;
 	Fixed a;
 	Fixed b(10);
 	Fixed c(42.42f);
@@ -12,11 +12,11 @@ int main(void) {
 	std::cout << "c = " << c << std::endl;
 	std::cout << "d = " << d << std::endl;
 
-	std::cout << "\n=== Teste de atribuição ===" << std::endl;
+	std::cout << "\n=== Assignment tests ===" << std::endl;
 	a = c;
-	std::cout << "a (após atribuição de c) = " << a << std::endl;
+	std::cout << "a (after assignment from c) = " << a << std::endl;
 
-	std::cout << "\n=== Teste de comparação ===" << std::endl;
+	std::cout << "\n=== Comparison tests ===" << std::endl;
 	std::cout << "b: " << b << "  c: " << c << "  d: " << d << std::endl;
 	std::cout << "b > c ? " << (b > c) << std::endl;
 	std::cout << "b < c ? " << (b < c) << std::endl;
@@ -25,7 +25,7 @@ int main(void) {
 	std::cout << "b == d ? " << (b == d) << std::endl;
 	std::cout << "b != c ? " << (b != c) << std::endl;
 
-	std::cout << "\n=== Teste de aritméticos ===" << std::endl;
+	std::cout << "\n=== Arithmetic tests ===" << std::endl;
 	std::cout << "b: " << b << "  c: " << c << std::endl;
 	Fixed e = b + c;
 	Fixed f = c - b;
@@ -37,7 +37,7 @@ int main(void) {
 	std::cout << "b * 2 = " << g << std::endl;
 	std::cout << "c / 2 = " << h << std::endl;
 
-	std::cout << "\n=== Teste de incremento/decremento ===" << std::endl;
+	std::cout << "\n=== Increment/Decrement tests ===" << std::endl;
 	Fixed i = Fixed(1);
 	std::cout << "i = " << i << std::endl;
 	std::cout << "++i = " << ++i << std::endl;
@@ -49,7 +49,7 @@ int main(void) {
 	std::cout << "i-- = " << i-- << std::endl;
 	std::cout << "i = " << i << std::endl;
 
-	std::cout << "\n=== Teste de min/max ===" << std::endl;
+	std::cout << "\n=== Min/Max tests ===" << std::endl;
 	Fixed j(3.14f);
 	Fixed k(2.71f);
 	std::cout << "j: " << j << "  k: " << k << std::endl; 
