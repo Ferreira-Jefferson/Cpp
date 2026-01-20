@@ -2,7 +2,7 @@
 
 #include "ClapTrap.hpp"
 
-class FragTrap: ClapTrap {
+class FragTrap: public ClapTrap {
 	public:
 		FragTrap();
 		FragTrap(std::string name);

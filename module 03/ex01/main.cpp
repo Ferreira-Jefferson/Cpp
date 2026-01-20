@@ -3,7 +3,7 @@
 #include <iostream>
 
 int main() {
-	std::cout << "=== Criando ClapTrap ===" << std::endl;
+	std::cout << "=== Create ClapTrap ===" << std::endl;
 	ClapTrap ct1("Alpha");
 	ClapTrap ct2("Beta");
 
@@ -25,7 +25,7 @@ int main() {
 	ct2.attack("Alpha"); 
 	std::cout << std::endl;
 
-	std::cout << "=== Criando ScavTrap ===" << std::endl;
+	std::cout << "=== Create ScavTrap ===" << std::endl;
 	ScavTrap st1("Guardian");
 	ScavTrap st2("Sentinel");
 
@@ -41,13 +41,13 @@ int main() {
 	st1.guardGate();		 
 	std::cout << std::endl;
 
-	std::cout << "=== Testando encadeamento de destrutores ===" << std::endl;
+	std::cout << "=== Testing destructor chaining ===" << std::endl;
 	{
 		ScavTrap temp("Temporary");
 		temp.attack("Alpha");
 		temp.guardGate();
 	}
 
-	std::cout << "\n=== Fim do programa ===" << std::endl;
+	std::cout << "\n=== End Program ===" << std::endl;
 	return 0;
 }
