@@ -1,3 +1,6 @@
+#include "Brain.hpp"
+#include <iostream>
+
 Brain::Brain() {
     std::cout << "Brain: default constructor called Brain" << std::endl;
 }
