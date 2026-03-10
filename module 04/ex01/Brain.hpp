@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Brain.hpp"
+#include <iostream>
 #include <string>
 
 class Brain {
