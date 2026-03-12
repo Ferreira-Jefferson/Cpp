@@ -11,6 +11,7 @@ class Cat: public Animal {
 		~Cat(void);
 
 		void makeSound(void) const;
+		void setType(std::string t);
 
 	private:
 		Brain *_brain;

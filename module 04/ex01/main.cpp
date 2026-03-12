@@ -5,10 +5,10 @@
 
 int main()
 {
-	const Animal* j = new Dog();
-	const Animal* i = new Cat();
-	delete j;
-	delete i;
+	const Animal* ad = new Dog();
+	const Animal* ac = new Cat();
+	delete ad;
+	delete ac;
 
 	std::cout << std::endl;
 
@@ -25,10 +25,20 @@ int main()
 
 	std::cout << std::endl;
 
-	Dog basic;
-	{
-		Dog tmp = basic;
-	}
+	Cat* c1 = new Cat();
+	Cat* c2 = new Cat(*c1);
+
+	std::cout << c1->getType() << std::endl;
+	std::cout << c2->getType() << std::endl;
+
+	c2->setType("Cat copy");
+	std::cout << "Deep copy c1: " << c1->getType() << std::endl;
+	std::cout << "Deep copy c2: " << c2->getType() << std::endl;
+	
+	std::cout << std::endl;
+
+	delete c1;
+	delete c2;
 
 	return 0;
 }

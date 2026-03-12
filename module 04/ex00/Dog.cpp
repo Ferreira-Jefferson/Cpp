@@ -5,7 +5,7 @@ Dog::Dog(void) {
 	type = "Dog";
 }
 
-Dog::Dog(const Dog& other) {
+Dog::Dog(const Dog& other): Animal(other)  {
 	std::cout << "Copy constructor called Dog" << std::endl;
 	*this = other;
 }
