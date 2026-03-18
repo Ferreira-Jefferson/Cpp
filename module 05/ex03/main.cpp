@@ -4,9 +4,13 @@
 #include "ShrubberyCreationForm.hpp"
 #include "RobotomyRequestForm.hpp"
 #include "PresidentialPardonForm.hpp"
+#include <cstdlib>
+#include <ctime>
 
 int main()
 {
+	std::srand(std::time(NULL));
+
 	Intern	someRandomIntern;
 
 	std::cout << "=== Subject example: robotomy request ===" << std::endl;
