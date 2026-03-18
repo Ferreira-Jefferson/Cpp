@@ -7,21 +7,21 @@
 
 class RobotomyRequestForm : public AForm
 {
-public:
-	RobotomyRequestForm();
-	RobotomyRequestForm(std::string const& target);
-	RobotomyRequestForm(RobotomyRequestForm const& src);
-	~RobotomyRequestForm();
+	public:
+		RobotomyRequestForm();
+		RobotomyRequestForm(std::string const& target);
+		RobotomyRequestForm(RobotomyRequestForm const& src);
+		~RobotomyRequestForm();
 
-	RobotomyRequestForm& operator=(RobotomyRequestForm const& rhs);
+		RobotomyRequestForm& operator=(RobotomyRequestForm const& rhs);
 
-	std::string const&	getTarget() const;
+		std::string const&	getTarget() const;
 
-protected:
-	void	doExecute() const;
+	protected:
+		void	doExecute() const;
 
-private:
-	std::string	_target;
+	private:
+		std::string	_target;
 };
 
 #endif
