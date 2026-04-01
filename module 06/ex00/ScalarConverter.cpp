@@ -2,9 +2,9 @@
 
 ScalarConverter::ScalarConverter(void) {}
 
-ScalarConverter::ScalarConverter(const ScalarConverter& copy) {}
+ScalarConverter::ScalarConverter(const ScalarConverter&) {}
 
-ScalarConverter &ScalarConverter::operator=(const ScalarConverter& obj) {
+ScalarConverter &ScalarConverter::operator=(const ScalarConverter&) {
     return *this;
 }
 
