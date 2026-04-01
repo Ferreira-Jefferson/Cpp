@@ -13,7 +13,7 @@ ScalarConverter::~ScalarConverter(void) {}
 void ScalarConverter::convert(std::string literal) {
     std::string special[] = {"nan", "nanf", "+inf", "-inf", "+inff", "-inff"};
 
-    for (int i=0; i < (sizeof(special) / sizeof(special[0])); i++)
+    for (int i=0; i < (int)(sizeof(special) / sizeof(special[0])); i++)
     {
         if (literal.compare(special[i]))
         {
