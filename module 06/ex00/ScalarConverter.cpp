@@ -15,7 +15,7 @@ void ScalarConverter::convert(std::string literal) {
 
     for (int i=0; i < (int)(sizeof(special) / sizeof(special[0])); i++)
     {
-        if (literal.compare(special[i]))
+        if (literal.compare(special[i]) == 0)
         {
             std::cout << "char: " << special[i] << std::endl;
             std::cout << "int: " << special[i] << std::endl;
