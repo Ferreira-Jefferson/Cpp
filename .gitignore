@@ -1,4 +1,5 @@
 *.log
 *test*
+*.pdf
 Account.hpp
 */*/obj
