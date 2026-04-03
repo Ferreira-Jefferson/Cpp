@@ -1,0 +1,234 @@
+#!/bin/sh
+LEARN_ROOT="$(cd "$(dirname "$0")" && pwd)"
+. "$LEARN_ROOT/lib/colors.sh"
+. "$LEARN_ROOT/lib/progress.sh"
+progress_init
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+_phase_name() {
+    case "$1" in
+        1) printf 'Leitura & Glossário' ;;
+        2) printf 'Complete os Blanks' ;;
+        3) printf 'Caça ao Bug' ;;
+        4) printf 'Escreva Partes' ;;
+        5) printf 'Do Zero' ;;
+        *) printf 'Fase %s' "$1" ;;
+    esac
+}
+
+_section() {
+    # $1 = arquivo, $2 = nome da seção
+    awk "/^## $2/{found=1; next} found && /^## /{exit} found{print}" "$1"
+}
+
+_show_exercise() {
+    PHASE=$(progress_get_phase)
+    EX=$(progress_get_exercise)
+    INSTR="$LEARN_ROOT/phases/phase-$PHASE/exercise-$EX/instructions.md"
+    NAME=$(_phase_name "$PHASE")
+
+    printf "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}\n"
+    printf "${BOLD}  Fase %s — %s${RESET}\n" "$PHASE" "$NAME"
+    printf "${BOLD}  Exercício %s/3${RESET}\n" "$EX"
+    printf "${BOLD}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${RESET}\n"
+
+    if [ ! -f "$INSTR" ]; then
+        printf "${YELLOW}[~] Arquivo de instruções não encontrado: %s${RESET}\n" "$INSTR"
+    else
+        printf '\n'
+        _section "$INSTR" "Objetivo"
+        printf '\n'
+        _section "$INSTR" "Tarefa"
+        printf '\n'
+    fi
+
+    printf "  ${GREEN}./learn check${RESET}   → valida seu Makefile\n"
+    printf "  ${YELLOW}./learn hint${RESET}    → próxima dica\n"
+    printf "  ${BLUE}./learn explain${RESET} → gabarito (bloqueado até check passar)\n"
+    printf '\n'
+}
+
+# ---------------------------------------------------------------------------
+# Commands
+# ---------------------------------------------------------------------------
+
+cmd_help() {
+    printf "${BOLD}makefile-learn — Aprendizado de Makefile C++ (42 School)${RESET}\n\n"
+    printf "  ./learn start               Começa pelo início (Fase 1, Exercício 1)\n"
+    printf "  ./learn phase <N>           Vai para a fase N (1-5)\n"
+    printf "  ./learn exercise <N> <M>    Vai para fase N, exercício M\n"
+    printf "  ./learn check               Valida seu Makefile\n"
+    printf "  ./learn hint                Próxima dica (máx. 3)\n"
+    printf "  ./learn explain             Mostra gabarito comentado\n"
+    printf "  ./learn progress            Exibe seu progresso\n"
+    printf "  ./learn reset               Reinicia o progresso\n"
+    printf '\n'
+}
+
+cmd_start() {
+    progress_set_current 1 1
+    _show_exercise
+}
+
+cmd_phase() {
+    N="$1"
+    case "$N" in
+        [1-5]) ;;
+        *) printf "${RED}[✗] Fase inválida. Use um número entre 1 e 5.${RESET}\n"; return 1 ;;
+    esac
+    progress_set_current "$N" 1
+    _show_exercise
+}
+
+cmd_exercise() {
+    N="$1"
+    M="$2"
+    case "$N" in
+        [1-5]) ;;
+        *) printf "${RED}[✗] Fase inválida. Use um número entre 1 e 5.${RESET}\n"; return 1 ;;
+    esac
+    case "$M" in
+        [1-3]) ;;
+        *) printf "${RED}[✗] Exercício inválido. Use um número entre 1 e 3.${RESET}\n"; return 1 ;;
+    esac
+    progress_set_current "$N" "$M"
+    _show_exercise
+}
+
+cmd_check() {
+    PHASE=$(progress_get_phase)
+    EX=$(progress_get_exercise)
+    EX_DIR="$LEARN_ROOT/phases/phase-$PHASE/exercise-$EX"
+    export LEARN_ROOT LEARN_PHASE="$PHASE" LEARN_EXERCISE="$EX" LEARN_EX_DIR="$EX_DIR"
+    sh "$LEARN_ROOT/lib/check.sh"
+}
+
+cmd_hint() {
+    PHASE=$(progress_get_phase)
+    EX=$(progress_get_exercise)
+    USED=$(progress_get_hints "$PHASE" "$EX")
+    if [ "$USED" -ge 3 ]; then
+        printf "${YELLOW}[~] Sem mais dicas. Use ./learn explain para ver o gabarito.${RESET}\n"
+        return
+    fi
+    NEXT=$((USED + 1))
+    INSTR="$LEARN_ROOT/phases/phase-$PHASE/exercise-$EX/instructions.md"
+    if [ ! -f "$INSTR" ]; then
+        printf "${YELLOW}[~] Arquivo de instruções não encontrado.${RESET}\n"
+        return
+    fi
+    DICA=$(awk "/^### Dica $NEXT/{found=1; next} found && /^### /{exit} found{print}" "$INSTR" | sed '/^$/d')
+    printf "${YELLOW}[~] Dica %s/3: ${RESET}%s\n" "$NEXT" "$DICA"
+    progress_inc_hint "$PHASE" "$EX"
+}
+
+cmd_explain() {
+    PHASE=$(progress_get_phase)
+    EX=$(progress_get_exercise)
+    if ! progress_can_explain "$PHASE" "$EX"; then
+        printf "${BLUE}[i] Complete o exercício primeiro (./learn check).${RESET}\n"
+        return
+    fi
+    SOL_DIR="$LEARN_ROOT/phases/phase-$PHASE/exercise-$EX/.solution"
+    printf "${BOLD}Gabarito — Fase $PHASE, Exercício $EX:${RESET}\n\n"
+    if [ -f "$SOL_DIR/Makefile.sol" ]; then
+        cat "$SOL_DIR/Makefile.sol"
+    elif [ -f "$SOL_DIR/answers.txt" ]; then
+        printf "${BOLD}Respostas corretas:${RESET}\n"
+        cat "$SOL_DIR/answers.txt"
+    else
+        printf "${YELLOW}[~] Gabarito não encontrado.${RESET}\n"
+    fi
+}
+
+cmd_progress() {
+    CUR_PHASE=$(progress_get_phase)
+    CUR_EX=$(progress_get_exercise)
+
+    printf "${BOLD}makefile-learn — Progresso${RESET}\n\n"
+
+    i=1
+    while [ "$i" -le 5 ]; do
+        NAME=$(_phase_name "$i")
+        # Count completed exercises in this phase
+        ARR=$(_read_completed_array "$(_progress_file)" "$i")
+        if [ -z "$ARR" ]; then
+            COUNT=0
+        else
+            COUNT=$(printf '%s' "$ARR" | tr ',' '\n' | grep -c '[0-9]')
+        fi
+
+        # Build 20-char bar
+        FILLED=$(( COUNT * 20 / 3 ))
+        EMPTY=$(( 20 - FILLED ))
+        BAR=''
+        j=0
+        while [ "$j" -lt "$FILLED" ]; do
+            BAR="${BAR}█"
+            j=$((j + 1))
+        done
+        j=0
+        while [ "$j" -lt "$EMPTY" ]; do
+            BAR="${BAR}░"
+            j=$((j + 1))
+        done
+
+        if [ "$COUNT" -eq 3 ]; then
+            STATUS="${GREEN}COMPLETO${RESET}"
+            printf "  Fase %s  %-30s [%s] %s/3  %b\n" "$i" "$NAME" "$BAR" "$COUNT" "$STATUS"
+        else
+            printf "  Fase %s  %-30s [%s] %s/3\n" "$i" "$NAME" "$BAR" "$COUNT"
+        fi
+
+        i=$((i + 1))
+    done
+
+    printf '\n  Atual: Fase %s, Exercício %s\n\n' "$CUR_PHASE" "$CUR_EX"
+}
+
+cmd_reset() {
+    printf 'Tem certeza que quer reiniciar o progresso? [s/N] '
+    read CONFIRM
+    case "$CONFIRM" in
+        s|S)
+            cat > "$(_progress_file)" <<'EOF'
+{
+  "current_phase": 1,
+  "current_exercise": 1,
+  "completed": {
+    "1": [],
+    "2": [],
+    "3": [],
+    "4": [],
+    "5": []
+  },
+  "hints_used": {},
+  "explain_unlocked": {}
+}
+EOF
+            printf "${GREEN}[✓] Progresso reiniciado.${RESET}\n"
+            ;;
+        *)
+            printf 'Cancelado.\n'
+            ;;
+    esac
+}
+
+# ---------------------------------------------------------------------------
+# Router
+# ---------------------------------------------------------------------------
+
+case "$1" in
+    start)      cmd_start ;;
+    phase)      cmd_phase "$2" ;;
+    exercise)   cmd_exercise "$2" "$3" ;;
+    check)      cmd_check ;;
+    hint)       cmd_hint ;;
+    explain)    cmd_explain ;;
+    progress)   cmd_progress ;;
+    reset)      cmd_reset ;;
+    *)          cmd_help ;;
+esac
