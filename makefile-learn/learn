@@ -45,9 +45,11 @@ _show_exercise() {
         printf '\n'
     fi
 
-    printf "  ${GREEN}./learn check${RESET}   → valida seu Makefile\n"
-    printf "  ${YELLOW}./learn hint${RESET}    → próxima dica\n"
-    printf "  ${BLUE}./learn explain${RESET} → gabarito (bloqueado até check passar)\n"
+    if [ "$LEARN_TUI" != "1" ]; then
+        printf "  ${GREEN}./learn check${RESET}   → valida seu Makefile\n"
+        printf "  ${YELLOW}./learn hint${RESET}    → próxima dica\n"
+        printf "  ${BLUE}./learn explain${RESET} → gabarito (bloqueado até check passar)\n"
+    fi
     printf '\n'
 }
 
@@ -218,17 +220,521 @@ EOF
 }
 
 # ---------------------------------------------------------------------------
+# TUI Functions
+# ---------------------------------------------------------------------------
+
+tui_header() {
+    PHASE=$(progress_get_phase)
+    EX=$(progress_get_exercise)
+    NAME=$(_phase_name "$PHASE")
+
+    printf "${BOLD}═══════════════════════════════════════════════════════${RESET}\n"
+    printf "${BOLD}  makefile-learn  |  Fase %s — %s  |  Exercício %s/3${RESET}\n" "$PHASE" "$NAME" "$EX"
+
+    BAR=""
+    i=1
+    while [ "$i" -le 5 ]; do
+        COUNT=$(progress_count_done "$i")
+        case "$COUNT" in
+            3) SEG="${GREEN}[███]${RESET}" ;;
+            2) SEG="${YELLOW}[██░]${RESET}" ;;
+            1) SEG="${YELLOW}[█░░]${RESET}" ;;
+            *) SEG="[░░░]" ;;
+        esac
+        if [ "$i" -lt 5 ]; then
+            BAR="${BAR}${SEG} "
+        else
+            BAR="${BAR}${SEG}"
+        fi
+        i=$((i + 1))
+    done
+    printf "  %b   F1·F2·F3·F4·F5\n" "$BAR"
+    printf "${BOLD}═══════════════════════════════════════════════════════${RESET}\n\n"
+}
+
+tui_menu() {
+    PHASE=$(progress_get_phase)
+    EX=$(progress_get_exercise)
+    HINTS_USED=$(progress_get_hints "$PHASE" "$EX")
+    HINTS_NEXT=$((HINTS_USED + 1))
+
+    if progress_can_explain "$PHASE" "$EX"; then
+        EXPLAIN_LABEL="Ver gabarito"
+    else
+        EXPLAIN_LABEL="${RED}Gabarito (bloqueado)${RESET}"
+    fi
+
+    if [ "$HINTS_USED" -ge 3 ]; then
+        HINT_LABEL="${RED}Sem mais dicas${RESET}"
+    else
+        HINT_LABEL="Dica (${HINTS_NEXT}/3)"
+    fi
+
+    if [ "$PHASE" = "1" ]; then
+        INSTR_TMP="$LEARN_ROOT/phases/phase-$PHASE/exercise-$EX/instructions.md"
+        if grep -q '^## QuizComandos' "$INSTR_TMP" 2>/dev/null; then
+            QUIZ_LABEL="Glossário & Quiz de Comandos"
+        else
+            QUIZ_LABEL="Responder quiz no terminal"
+        fi
+    else
+        QUIZ_LABEL="${RED}Quiz inline (apenas Fase 1)${RESET}"
+    fi
+
+    printf "  [1] Ver exercício atual\n"
+    printf "  [2] Verificar (check)\n"
+    printf "  [3] %b\n" "$QUIZ_LABEL"
+    printf "  [4] %b\n" "$HINT_LABEL"
+    printf "  [5] %b\n" "$EXPLAIN_LABEL"
+    printf "  [6] Progresso geral\n"
+    printf "  [7] Navegar (fase/exercício)\n"
+    printf "  [8] Reiniciar progresso\n"
+    printf "  [0] Sair\n\n"
+    printf "  Escolha: "
+    read -r MENU_CHOICE
+}
+
+# ---------------------------------------------------------------------------
+# Phase 1 — Glossary explorer (user types a command name, sees explanation)
+# ---------------------------------------------------------------------------
+tui_glossary_explore() {
+    INSTR="$1"
+
+    while true; do
+        printf '\033[2J\033[H'
+        tui_header
+
+        printf "  ${BOLD}Explorar Comandos${RESET}\n\n"
+
+        # List available entries from ## Glossário section
+        printf "  Comandos disponíveis:\n"
+        awk '/^## Glossário/{f=1; next} f && /^## /{exit} f && /^### /{gsub(/^### /,""); printf "    • %s\n", $0}' "$INSTR"
+
+        printf "\n  Digite o nome de um comando para ver a explicação.\n"
+        printf "  (Enter em branco para voltar)\n\n"
+        printf "  Comando: "
+        read -r USER_CMD
+
+        # Trim whitespace/CR
+        USER_CMD=$(printf '%s' "$USER_CMD" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+
+        [ -z "$USER_CMD" ] && return
+
+        printf '\033[2J\033[H'
+        tui_header
+
+        # Lookup in glossary (exact match, case-sensitive)
+        EXPLANATION=$(awk -v cmd="$USER_CMD" '
+            /^## Glossário/{sec=1; next}
+            sec && /^## /{exit}
+            sec && /^### / {
+                entry=substr($0, 5)
+                in_entry=(entry == cmd)
+                next
+            }
+            sec && in_entry { print }
+        ' "$INSTR")
+
+        if [ -n "$EXPLANATION" ]; then
+            printf "  ${BOLD}${GREEN}%s${RESET}\n" "$USER_CMD"
+            printf "  ────────────────────────────────────────\n"
+            printf '%s\n' "$EXPLANATION" | while IFS= read -r LINE; do
+                printf "  %s\n" "$LINE"
+            done
+        else
+            printf "  ${RED}[✗] '%s' não encontrado no glossário.${RESET}\n" "$USER_CMD"
+            printf "  Verifique a grafia exata (maiúsculas importam).\n"
+        fi
+
+        printf "\n  Pressione Enter para continuar..."
+        read -r _PAUSE
+    done
+}
+
+# ---------------------------------------------------------------------------
+# Phase 1 — Command-name quiz (description shown, user types the command)
+# ---------------------------------------------------------------------------
+tui_command_quiz() {
+    INSTR="$1"
+    STUDENT="$2"
+
+    TOTAL=$(awk '/^## QuizComandos/{f=1; next} f && /^## /{exit} f && /^### C[0-9]/{count++} END{print count+0}' "$INSTR")
+
+    if [ -z "$TOTAL" ] || [ "$TOTAL" -eq 0 ]; then
+        printf "\n  ${YELLOW}[~] Nenhuma questão de comandos encontrada.${RESET}\n"
+        printf "\n  Pressione Enter para continuar..."
+        read -r _PAUSE
+        return
+    fi
+
+    if [ -f "$STUDENT" ]; then
+        printf '\033[2J\033[H'
+        tui_header
+        printf "  Já existe um arquivo de respostas. Sobrescrever? [s/N] "
+        read -r OVERWRITE
+        case "$OVERWRITE" in
+            s|S) ;;
+            *)
+                printf "  Mantendo respostas existentes.\n"
+                printf "\n  Pressione Enter para continuar..."
+                read -r _PAUSE
+                return
+                ;;
+        esac
+    fi
+
+    > "$STUDENT"
+
+    N=1
+    while [ "$N" -le "$TOTAL" ]; do
+        printf '\033[2J\033[H'
+        tui_header
+        printf "  ${BOLD}Quiz de Comandos — Pergunta %s/%s${RESET}\n\n" "$N" "$TOTAL"
+        printf "  Leia a descrição e escreva o nome do comando que corresponde:\n\n"
+
+        awk -v qnum="$N" '
+            /^## QuizComandos/{sec=1; next}
+            sec && /^## /{exit}
+            sec && /^### C[0-9]/ {
+                label=substr($0,5)
+                gsub(/^C/, "", label)
+                n=label+0
+                in_q=(n==qnum)
+                next
+            }
+            sec && in_q { print "  " $0 }
+        ' "$INSTR"
+
+        printf "\n"
+        printf "  ${BLUE}(0 para voltar ao menu)${RESET}\n\n"
+        VALID=""
+        ABORT=0
+        while [ -z "$VALID" ]; do
+            printf "  Sua resposta: "
+            read -r RAW_ANS
+            ANS=$(printf '%s' "$RAW_ANS" | tr -d '\r' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+            if [ "$ANS" = "0" ]; then
+                ABORT=1
+                break
+            elif [ -n "$ANS" ]; then
+                VALID="$ANS"
+            else
+                printf "  ${RED}[✗] Digite o nome do comando.${RESET}\n"
+            fi
+        done
+
+        [ "$ABORT" = "1" ] && return
+
+        printf "c%s:%s\n" "$N" "$VALID" >> "$STUDENT"
+        N=$((N + 1))
+    done
+
+    printf '\033[2J\033[H'
+    tui_header
+    printf "  ${GREEN}[✓] %s respostas salvas.${RESET}\n" "$TOTAL"
+    printf "  Use a opção [2] para checar suas respostas.\n"
+    printf "\n  Pressione Enter para continuar..."
+    read -r _PAUSE
+}
+
+# ---------------------------------------------------------------------------
+# Phase 1 — Dispatcher: glossary+command quiz OR legacy multiple-choice
+# ---------------------------------------------------------------------------
+tui_quiz_interactive() {
+    PHASE=$(progress_get_phase)
+    EX=$(progress_get_exercise)
+
+    if [ "$PHASE" != "1" ]; then
+        printf "\n  ${YELLOW}[~] Quiz interativo disponível apenas na Fase 1.${RESET}\n"
+        printf "\n  Pressione Enter para continuar..."
+        read -r _PAUSE
+        return
+    fi
+
+    INSTR="$LEARN_ROOT/phases/phase-$PHASE/exercise-$EX/instructions.md"
+    STUDENT="$LEARN_ROOT/phases/phase-$PHASE/exercise-$EX/.student_answers.txt"
+
+    if [ ! -f "$INSTR" ]; then
+        printf "\n  ${RED}[✗] Arquivo de instruções não encontrado.${RESET}\n"
+        printf "\n  Pressione Enter para continuar..."
+        read -r _PAUSE
+        return
+    fi
+
+    # New format: glossary + command-name quiz
+    if grep -q '^## QuizComandos' "$INSTR" 2>/dev/null; then
+        while true; do
+            printf '\033[2J\033[H'
+            tui_header
+            printf "  ${BOLD}Fase 1 — Glossário & Quiz${RESET}\n\n"
+            printf "  [1] Explorar comandos (aprenda o que cada um faz)\n"
+            printf "  [2] Responder o quiz (escreva o nome do comando)\n"
+            printf "  [0] Voltar\n\n"
+            printf "  Escolha: "
+            read -r P1_CHOICE
+            case "$P1_CHOICE" in
+                1) tui_glossary_explore "$INSTR" ;;
+                2) tui_command_quiz "$INSTR" "$STUDENT" ; return ;;
+                0) return ;;
+                *) ;;
+            esac
+        done
+    else
+        # Legacy multiple-choice quiz
+        TOTAL=$(awk '/^### Q[0-9]/{count++} END{print count}' "$INSTR")
+
+        if [ -z "$TOTAL" ] || [ "$TOTAL" -eq 0 ]; then
+            printf "\n  ${YELLOW}[~] Nenhuma questão encontrada.${RESET}\n"
+            printf "\n  Pressione Enter para continuar..."
+            read -r _PAUSE
+            return
+        fi
+
+        if [ -f "$STUDENT" ]; then
+            printf "\n  Já existe um arquivo de respostas. Sobrescrever? [s/N] "
+            read -r OVERWRITE
+            case "$OVERWRITE" in
+                s|S) ;;
+                *)
+                    printf "  Mantendo respostas existentes.\n"
+                    printf "\n  Pressione Enter para continuar..."
+                    read -r _PAUSE
+                    return
+                    ;;
+            esac
+        fi
+
+        > "$STUDENT"
+
+        N=1
+        while [ "$N" -le "$TOTAL" ]; do
+            printf '\033[2J\033[H'
+            tui_header
+            printf "  ${BOLD}Questão %s/%s${RESET}\n\n" "$N" "$TOTAL"
+
+            awk -v qnum="$N" '
+                /^### Q/ {
+                    qn = substr($0, 6)
+                    if (qn == qnum) { in_q=1; next }
+                    else if (in_q) { exit }
+                }
+                /^## / && in_q { exit }
+                in_q { print "  " $0 }
+            ' "$INSTR"
+
+            printf "\n"
+            VALID=""
+            while [ -z "$VALID" ]; do
+                printf "  Sua resposta (a/b/c/d): "
+                read -r RAW_ANS
+                ANS=$(printf '%s' "$RAW_ANS" | tr 'A-Z' 'a-z' | tr -d ' \r\n')
+                case "$ANS" in
+                    a|b|c|d) VALID="$ANS" ;;
+                    *) printf "  ${RED}[✗] Digite apenas a, b, c ou d.${RESET}\n" ;;
+                esac
+            done
+
+            printf "q%s:%s\n" "$N" "$VALID" >> "$STUDENT"
+            N=$((N + 1))
+        done
+
+        printf '\033[2J\033[H'
+        tui_header
+        printf "  ${GREEN}[✓] %s respostas salvas.${RESET}\n" "$TOTAL"
+        printf "  Use a opção [2] para checar suas respostas.\n"
+        printf "\n  Pressione Enter para continuar..."
+        read -r _PAUSE
+    fi
+}
+
+tui_check_and_advance() {
+    PHASE=$(progress_get_phase)
+    EX=$(progress_get_exercise)
+
+    if ! progress_is_done "$PHASE" "$EX"; then
+        printf "\n  Pressione Enter para continuar..."
+        read -r _PAUSE
+        return
+    fi
+
+    NEXT_EX=$((EX + 1))
+    if [ "$NEXT_EX" -le 3 ]; then
+        printf "\n"
+        printf "  ${GREEN}[✓] Exercício completo!${RESET} Avançar para Exercício %s? [S/n] " "$NEXT_EX"
+        read -r ADVANCE
+        case "$ADVANCE" in
+            n|N) ;;
+            *)
+                progress_set_current "$PHASE" "$NEXT_EX"
+                printf "  Avançando para Fase %s, Exercício %s.\n" "$PHASE" "$NEXT_EX"
+                ;;
+        esac
+    else
+        NEXT_PHASE=$((PHASE + 1))
+        if [ "$NEXT_PHASE" -le 5 ]; then
+            printf "\n"
+            printf "  ${GREEN}[✓] Fase %s completa!${RESET} Avançar para Fase %s? [S/n] " "$PHASE" "$NEXT_PHASE"
+            read -r ADVANCE
+            case "$ADVANCE" in
+                n|N) ;;
+                *)
+                    progress_set_current "$NEXT_PHASE" 1
+                    printf "  Avançando para Fase %s, Exercício 1.\n" "$NEXT_PHASE"
+                    ;;
+            esac
+        else
+            printf "\n"
+            printf "${BOLD}${GREEN}  ╔══════════════════════════════════════╗\n"
+            printf "  ║  Parabéns! Curso 100%% concluído!     ║\n"
+            printf "  ╚══════════════════════════════════════╝${RESET}\n"
+        fi
+    fi
+
+    printf "\n  Pressione Enter para continuar..."
+    read -r _PAUSE
+}
+
+tui_navigate() {
+    printf "  Navegar para:\n"
+    printf "  [1] Fase específica (início do exercício 1)\n"
+    printf "  [2] Fase e exercício específicos\n"
+    printf "  [0] Voltar\n\n"
+    printf "  Escolha: "
+    read -r NAV_CHOICE
+
+    case "$NAV_CHOICE" in
+        1)
+            printf "  Fase (1-5): "
+            read -r NAV_PHASE
+            case "$NAV_PHASE" in
+                [1-5])
+                    progress_set_current "$NAV_PHASE" 1
+                    printf "  ${GREEN}[✓] Navegado para Fase %s, Exercício 1.${RESET}\n" "$NAV_PHASE"
+                    ;;
+                *)
+                    printf "  ${RED}[✗] Fase inválida. Use 1-5.${RESET}\n"
+                    ;;
+            esac
+            ;;
+        2)
+            printf "  Fase (1-5): "
+            read -r NAV_PHASE
+            printf "  Exercício (1-3): "
+            read -r NAV_EX
+            case "$NAV_PHASE" in
+                [1-5])
+                    case "$NAV_EX" in
+                        [1-3])
+                            progress_set_current "$NAV_PHASE" "$NAV_EX"
+                            printf "  ${GREEN}[✓] Navegado para Fase %s, Exercício %s.${RESET}\n" "$NAV_PHASE" "$NAV_EX"
+                            ;;
+                        *)
+                            printf "  ${RED}[✗] Exercício inválido. Use 1-3.${RESET}\n"
+                            ;;
+                    esac
+                    ;;
+                *)
+                    printf "  ${RED}[✗] Fase inválida. Use 1-5.${RESET}\n"
+                    ;;
+            esac
+            ;;
+        0|*)
+            return
+            ;;
+    esac
+
+    printf "\n  Pressione Enter para continuar..."
+    read -r _PAUSE
+}
+
+main_loop() {
+    if ! [ -t 0 ]; then
+        printf "${YELLOW}[~] Modo interativo requer um terminal. Use ./learn <comando>.${RESET}\n"
+        cmd_help
+        return 1
+    fi
+
+    export LEARN_TUI=1
+
+    while true; do
+        printf '\033[2J\033[H'
+        tui_header
+        _show_exercise
+        tui_menu
+
+        case "$MENU_CHOICE" in
+            1)
+                printf "\n  Pressione Enter para continuar..."
+                read -r _PAUSE
+                ;;
+            2)
+                printf '\033[2J\033[H'
+                tui_header
+                cmd_check
+                tui_check_and_advance
+                ;;
+            3)
+                tui_quiz_interactive
+                ;;
+            4)
+                printf '\033[2J\033[H'
+                tui_header
+                cmd_hint
+                printf "\n  Pressione Enter para continuar..."
+                read -r _PAUSE
+                ;;
+            5)
+                printf '\033[2J\033[H'
+                tui_header
+                cmd_explain
+                printf "\n  Pressione Enter para continuar..."
+                read -r _PAUSE
+                ;;
+            6)
+                printf '\033[2J\033[H'
+                cmd_progress
+                printf "\n  Pressione Enter para continuar..."
+                read -r _PAUSE
+                ;;
+            7)
+                printf '\033[2J\033[H'
+                tui_header
+                tui_navigate
+                ;;
+            8)
+                printf '\033[2J\033[H'
+                cmd_reset
+                printf "\n  Pressione Enter para continuar..."
+                read -r _PAUSE
+                ;;
+            0)
+                printf "  Até logo!\n"
+                unset LEARN_TUI
+                exit 0
+                ;;
+            *)
+                printf "  ${RED}[✗] Opção inválida. Digite um número de 0 a 8.${RESET}\n"
+                printf "\n  Pressione Enter para continuar..."
+                read -r _PAUSE
+                ;;
+        esac
+    done
+}
+
+# ---------------------------------------------------------------------------
 # Router
 # ---------------------------------------------------------------------------
 
 case "$1" in
-    start)      cmd_start ;;
-    phase)      cmd_phase "$2" ;;
-    exercise)   cmd_exercise "$2" "$3" ;;
-    check)      cmd_check ;;
-    hint)       cmd_hint ;;
-    explain)    cmd_explain ;;
-    progress)   cmd_progress ;;
-    reset)      cmd_reset ;;
-    *)          cmd_help ;;
+    "")             main_loop ;;
+    start)          cmd_start ;;
+    phase)          cmd_phase "$2" ;;
+    exercise)       cmd_exercise "$2" "$3" ;;
+    check)          cmd_check ;;
+    hint)           cmd_hint ;;
+    explain)        cmd_explain ;;
+    progress)       cmd_progress ;;
+    reset)          cmd_reset ;;
+    help|--help|-h) cmd_help ;;
+    *)              cmd_help ;;
 esac

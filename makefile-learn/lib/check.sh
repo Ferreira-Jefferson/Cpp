@@ -30,6 +30,7 @@ _step_line() {
 # Advance to next exercise after success
 # ---------------------------------------------------------------------------
 _advance_if_needed() {
+    [ "$LEARN_TUI" = "1" ] && return
     printf "\n    Use ./learn explain para ver o gabarito comentado.\n"
     NEXT_EX=$((EX + 1))
     if [ "$NEXT_EX" -le 3 ]; then
@@ -57,37 +58,67 @@ check_phase1() {
         exit 1
     fi
 
+    # Detect quiz format: command-name (c1:NAME) or multiple-choice (q1:a)
+    FIRST_KEY=$(grep -m1 '^[a-z][0-9]*:' "$SOL" | cut -d: -f1)
+    case "$FIRST_KEY" in
+        c*) QUIZ_TYPE="command" ;;
+        *)  QUIZ_TYPE="choice" ;;
+    esac
+
     # If student file doesn't exist, show instructions
     if [ ! -f "$STUDENT" ]; then
-        _info "Para responder o quiz, edite o arquivo:"
-        printf "    phases/phase-%s/exercise-%s/.student_answers.txt\n\n" "$PHASE" "$EX"
-        printf "    Formato:\n"
-        printf "    q1:a\n"
-        printf "    q2:b\n"
-        printf "    ...\n\n"
-        printf "    Depois rode ./learn check novamente.\n"
+        if [ "$QUIZ_TYPE" = "command" ]; then
+            _info "Use a opção [3] → [2] para responder o quiz de comandos."
+        else
+            _info "Para responder o quiz, edite o arquivo:"
+            printf "    phases/phase-%s/exercise-%s/.student_answers.txt\n\n" "$PHASE" "$EX"
+            printf "    Formato:\n"
+            printf "    q1:a\n"
+            printf "    q2:b\n"
+            printf "    ...\n\n"
+            printf "    Depois rode ./learn check novamente.\n"
+        fi
         exit 0
     fi
 
     TOTAL=0
     CORRECT=0
-    FAILED_LIST=""
 
-    # Read solution answers into variables
-    while IFS=: read -r QID SOL_ANS; do
+    while IFS= read -r RAW_LINE; do
+        [ -z "$RAW_LINE" ] && continue
+        QID=$(printf '%s' "$RAW_LINE" | cut -d: -f1)
+        SOL_ANS=$(printf '%s' "$RAW_LINE" | cut -d: -f2-)
         [ -z "$QID" ] && continue
         TOTAL=$((TOTAL + 1))
 
-        # Get student answer for this question
-        STU_ANS=$(grep "^${QID}:" "$STUDENT" | head -1 | cut -d: -f2 | tr -d ' \r\n')
+        STU_RAW=$(grep "^${QID}:" "$STUDENT" | head -1)
+        STU_ANS=$(printf '%s' "$STU_RAW" | cut -d: -f2- | tr -d '\r')
 
-        if [ "$STU_ANS" = "$SOL_ANS" ]; then
-            CORRECT=$((CORRECT + 1))
-            QNUM=$(printf '%s' "$QID" | tr -d 'q')
-            printf "${GREEN}[✓]${RESET} Questão %s: correta\n" "$QNUM"
+        if [ "$QUIZ_TYPE" = "command" ]; then
+            # Case-insensitive comparison for command names
+            SOL_LOW=$(printf '%s' "$SOL_ANS" | tr 'A-Z' 'a-z')
+            STU_LOW=$(printf '%s' "$STU_ANS" | tr 'A-Z' 'a-z')
+            MATCH=0
+            [ "$STU_LOW" = "$SOL_LOW" ] && MATCH=1
         else
-            QNUM=$(printf '%s' "$QID" | tr -d 'q')
-            printf "${RED}[✗]${RESET} Questão %s: incorreta  (sua: %s | correta: %s)\n" "$QNUM" "$STU_ANS" "$SOL_ANS"
+            MATCH=0
+            [ "$STU_ANS" = "$SOL_ANS" ] && MATCH=1
+        fi
+
+        QNUM=$(printf '%s' "$QID" | sed 's/[^0-9]//g')
+        if [ "$MATCH" = "1" ]; then
+            CORRECT=$((CORRECT + 1))
+            if [ "$QUIZ_TYPE" = "command" ]; then
+                printf "${GREEN}[✓]${RESET} Comando %s: %s\n" "$QNUM" "$SOL_ANS"
+            else
+                printf "${GREEN}[✓]${RESET} Questão %s: correta\n" "$QNUM"
+            fi
+        else
+            if [ "$QUIZ_TYPE" = "command" ]; then
+                printf "${RED}[✗]${RESET} Comando %s: sua resposta '%s' | correto: '%s'\n" "$QNUM" "$STU_ANS" "$SOL_ANS"
+            else
+                printf "${RED}[✗]${RESET} Questão %s: incorreta  (sua: %s | correta: %s)\n" "$QNUM" "$STU_ANS" "$SOL_ANS"
+            fi
         fi
     done < "$SOL"
 
@@ -103,7 +134,7 @@ check_phase1() {
         _advance_if_needed
     else
         printf "Resultado: %s/%s corretas\n" "$CORRECT" "$TOTAL"
-        _err "FALHOU — corrija as questões erradas e rode ./learn check novamente."
+        _err "FALHOU — corrija as respostas erradas e rode ./learn check novamente."
         exit 1
     fi
 }

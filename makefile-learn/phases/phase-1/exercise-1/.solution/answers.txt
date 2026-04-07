@@ -1,5 +1,10 @@
-q1:b
-q2:b
-q3:a
-q4:c
-q5:a
+c1:NAME
+c2:SRC
+c3:OBJ
+c4:CXX
+c5:CXXFLAGS
+c6:all
+c7:clean
+c8:fclean
+c9:re
+c10:.PHONY

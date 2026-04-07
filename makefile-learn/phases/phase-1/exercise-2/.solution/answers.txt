@@ -1,3 +1,10 @@
-q1:b
-q2:a
-q3:c
+c1:$@
+c2:$<
+c3:$^
+c4:%.o: %.cpp
+c5:-c
+c6:-o
+c7:-Wall
+c8:-Wextra
+c9:-Werror
+c10:-std=c++98
