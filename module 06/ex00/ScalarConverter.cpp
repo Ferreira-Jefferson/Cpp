@@ -10,39 +10,111 @@ ScalarConverter &ScalarConverter::operator=(const ScalarConverter&) {
 
 ScalarConverter::~ScalarConverter(void) {}
 
-void ScalarConverter::convert(std::string literal) {
+static bool isSpecial(const std::string& literal) {
     std::string special[] = {"nan", "nanf", "+inf", "-inf", "+inff", "-inff"};
+    for (int i = 0; i < 6; i++)
+        if (literal == special[i])
+            return true;
+    return false;
+}
 
-    for (int i=0; i < (int)(sizeof(special) / sizeof(special[0])); i++)
-    {
-        if (literal.compare(special[i]) == 0)
-        {
-            std::cout << "char: " << special[i] << std::endl;
-            std::cout << "int: " << special[i] << std::endl;
-            std::cout << "float: " << special[i] + "f" << std::endl;
-            std::cout << "double: " << special[i] << std::endl;
-            return ;
+static int getPrecision(const std::string& literal) {
+    std::size_t dot = literal.find('.');
+
+    if (dot == std::string::npos)
+        return 1;
+    std::size_t end = literal.length();
+    if (literal[end - 1] == 'f')
+        end--;
+    int prec = static_cast<int>(end - dot - 1);
+    return prec < 1 ? 1 : prec;
+}
+
+static void printSpecial(const std::string& literal) {
+    std::string base;
+    
+    if (literal == "nanf" || literal == "+inff" || literal == "-inff")
+        base = literal.substr(0, literal.length() - 1);
+    else
+        base = literal;
+
+    std::cout << "char: impossible" << std::endl;
+    std::cout << "int: impossible" << std::endl;
+    std::cout << "float: " << base << "f" << std::endl;
+    std::cout << "double: " << base << std::endl;
+}
+
+void ScalarConverter::convert(std::string literal) {
+    if (isSpecial(literal)) {
+        printSpecial(literal);
+        return;
+    }
+
+    char   c;
+    int    i;
+    float  f;
+    double d;
+
+    if (literal[0] == '\'') {
+        if (literal.length() != 3) {
+            std::cout << "char: impossible" << std::endl;
+            std::cout << "int: impossible" << std::endl;
+            std::cout << "float: impossible" << std::endl;
+            std::cout << "double: impossible" << std::endl;
+            return;
+        }
+        c = literal[1];
+        i = static_cast<int>(c);
+        f = static_cast<float>(c);
+        d = static_cast<double>(c);
+    } else {
+        char *end;
+        if (literal.find('.') != std::string::npos) {
+            d = std::strtod(literal.c_str(), &end);
+            if (*end != '\0' && *end != 'f') {
+                std::cout << "char: impossible" << std::endl;
+                std::cout << "int: impossible" << std::endl;
+                std::cout << "float: impossible" << std::endl;
+                std::cout << "double: impossible" << std::endl;
+                return;
+            }
+            f = static_cast<float>(d);
+            i = static_cast<int>(d);
+            c = static_cast<char>(d);
+        } else {
+            long l = std::strtol(literal.c_str(), &end, 10);
+            if (*end != '\0' || literal.empty()) {
+                std::cout << "char: impossible" << std::endl;
+                std::cout << "int: impossible" << std::endl;
+                std::cout << "float: impossible" << std::endl;
+                std::cout << "double: impossible" << std::endl;
+                return;
+            }
+            i = static_cast<int>(l);
+            c = static_cast<char>(l);
+            f = static_cast<float>(l);
+            d = static_cast<double>(l);
         }
     }
-    // char 
-    if (literal[0] == '\'')
-    {
-        if (literal.length() != 3)
-            std::cout << "char: " << "impossible" << std::endl;
-        else if (!isprint(literal[1]))
-            std::cout << "char: " << "not displayable" << std::endl;
-        else
-        {
-            std::cout << "char: " << literal[1] << std::endl;
-            std::cout << "int: " << static_cast<int>(literal[1]) << std::endl;
-            std::cout << "float: " << static_cast<float>(literal[1]) << std::endl;
-            std::cout << "double: " << static_cast<double>(literal[1]) << std::endl;
-        }
-        return ;
-    }
-    // float
 
-    // double 
-    // int
+    // print char
+    if (d < 0 || d > 127)
+        std::cout << "char: impossible" << std::endl;
+    else if (!isprint(static_cast<int>(c)))
+        std::cout << "char: Non displayable" << std::endl;
+    else
+        std::cout << "char: " << c << std::endl;
 
+    // print int
+    if (d < INT_MIN || d > INT_MAX)
+        std::cout << "int: impossible" << std::endl;
+    else
+        std::cout << "int: " << i << std::endl;
+
+    // print float and double
+    int prec = getPrecision(literal);
+    std::cout << std::fixed;
+    std::cout.precision(prec);
+    std::cout << "float: " << f << "f" << std::endl;
+    std::cout << "double: " << d << std::endl;
 }
