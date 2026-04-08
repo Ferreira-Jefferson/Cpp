@@ -4,38 +4,12 @@
 class Base
 {
 	public:
-		Base();
-		Base(const Base& other);
-		Base& operator=(const Base& other);
 		virtual ~Base();
 };
 
-class A : public Base
-{
-	public:
-		A();
-		A(const A& other);
-		A& operator=(const A& other);
-		~A();
-};
-
-class B : public Base
-{
-	public:
-		B();
-		B(const B& other);
-		B& operator=(const B& other);
-		~B();
-};
-
-class C : public Base
-{
-	public:
-		C();
-		C(const C& other);
-		C& operator=(const C& other);
-		~C();
-};
+class A : public Base {};
+class B : public Base {};
+class C : public Base {};
 
 Base*	generate(void);
 void	identify(Base* p);

@@ -2,29 +2,7 @@
 #include <cstdlib>
 #include <iostream>
 
-// Base
-Base::Base() {}
-Base::Base(const Base& other) { (void)other; }
-Base& Base::operator=(const Base& other) { (void)other; return *this; }
 Base::~Base() {}
-
-// A
-A::A() {}
-A::A(const A& other) : Base(other) {}
-A& A::operator=(const A& other) { Base::operator=(other); return *this; }
-A::~A() {}
-
-// B
-B::B() {}
-B::B(const B& other) : Base(other) {}
-B& B::operator=(const B& other) { Base::operator=(other); return *this; }
-B::~B() {}
-
-// C
-C::C() {}
-C::C(const C& other) : Base(other) {}
-C& C::operator=(const C& other) { Base::operator=(other); return *this; }
-C::~C() {}
 
 Base* generate(void)
 {
