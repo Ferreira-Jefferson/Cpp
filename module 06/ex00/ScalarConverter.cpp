@@ -55,46 +55,39 @@ void ScalarConverter::convert(std::string literal) {
     float  f;
     double d;
 
-    if (literal[0] == '\'') {
-        if (literal.length() != 3) {
+    if (literal.length() == 1 && std::isprint(literal[0])) {
+        literal = std::wstring(static_cast<int>(literal[0]));
+    } else if (literal.length() == 3 && literal[0] == '\'' 
+        && literal[2] == '\'' && std::isprint(literal[1])) {
+        literal = std::wstring(static_cast<int>(literal[1]));
+    }
+    char *end;
+    if (literal.find('.') != std::string::npos) {
+        d = std::strtod(literal.c_str(), &end);
+        if (*end != '\0' && *end != 'f') {
             std::cout << "char: impossible" << std::endl;
             std::cout << "int: impossible" << std::endl;
             std::cout << "float: impossible" << std::endl;
             std::cout << "double: impossible" << std::endl;
             return;
         }
-        c = literal[1];
-        i = static_cast<int>(c);
-        f = static_cast<float>(c);
-        d = static_cast<double>(c);
+        c = static_cast<char>(d);
+        f = static_cast<float>(d);
+        i = static_cast<int>(d);
+        c = static_cast<char>(d);
     } else {
-        char *end;
-        if (literal.find('.') != std::string::npos) {
-            d = std::strtod(literal.c_str(), &end);
-            if (*end != '\0' && *end != 'f') {
-                std::cout << "char: impossible" << std::endl;
-                std::cout << "int: impossible" << std::endl;
-                std::cout << "float: impossible" << std::endl;
-                std::cout << "double: impossible" << std::endl;
-                return;
-            }
-            f = static_cast<float>(d);
-            i = static_cast<int>(d);
-            c = static_cast<char>(d);
-        } else {
-            long l = std::strtol(literal.c_str(), &end, 10);
-            if (*end != '\0' || literal.empty()) {
-                std::cout << "char: impossible" << std::endl;
-                std::cout << "int: impossible" << std::endl;
-                std::cout << "float: impossible" << std::endl;
-                std::cout << "double: impossible" << std::endl;
-                return;
-            }
-            i = static_cast<int>(l);
-            c = static_cast<char>(l);
-            f = static_cast<float>(l);
-            d = static_cast<double>(l);
+        long l = std::strtol(literal.c_str(), &end, 10);
+        if (*end != '\0' || literal.empty()) {
+            std::cout << "char: impossible" << std::endl;
+            std::cout << "int: impossible" << std::endl;
+            std::cout << "float: impossible" << std::endl;
+            std::cout << "double: impossible" << std::endl;
+            return;
         }
+        i = static_cast<int>(l);
+        c = static_cast<char>(l);
+        f = static_cast<float>(l);
+        d = static_cast<double>(l);
     }
 
     // print char
