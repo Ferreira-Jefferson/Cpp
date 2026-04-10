@@ -12,7 +12,6 @@ int main(void)
 		Base* obj = generate();
 		std::cout << "pointer: ";
 		identify(obj);
-	
 		std::cout << "reference: ";
 		identify(*obj);
 
