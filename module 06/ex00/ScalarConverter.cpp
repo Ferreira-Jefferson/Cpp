@@ -55,16 +55,20 @@ void ScalarConverter::convert(std::string literal) {
     float  f;
     double d;
 
-    if (literal.length() == 1 && std::isprint(literal[0])) {
-        literal = std::wstring(static_cast<int>(literal[0]));
-    } else if (literal.length() == 3 && literal[0] == '\'' 
+    if (literal.length() == 3 && literal[0] == '\''
         && literal[2] == '\'' && std::isprint(literal[1])) {
-        literal = std::wstring(static_cast<int>(literal[1]));
+        std::ostringstream oss;
+        oss << static_cast<int>(literal[1]);
+        literal = oss.str();
+    } else if (literal.length() == 1 && !std::isdigit(literal[0]) && std::isprint(literal[0])) {
+        std::ostringstream oss;
+        oss << static_cast<int>(literal[0]);
+        literal = oss.str();
     }
     char *end;
     if (literal.find('.') != std::string::npos) {
         d = std::strtod(literal.c_str(), &end);
-        if (*end != '\0' && *end != 'f') {
+        if (*end != '\0' && !(*end == 'f' && *(end + 1) == '\0')) {
             std::cout << "char: impossible" << std::endl;
             std::cout << "int: impossible" << std::endl;
             std::cout << "float: impossible" << std::endl;
@@ -96,7 +100,7 @@ void ScalarConverter::convert(std::string literal) {
     else if (!isprint(static_cast<int>(c)))
         std::cout << "char: Non displayable" << std::endl;
     else
-        std::cout << "char: " << c << std::endl;
+        std::cout << "char: '" << c << "'" << std::endl;
 
     // print int
     if (d < INT_MIN || d > INT_MAX)
