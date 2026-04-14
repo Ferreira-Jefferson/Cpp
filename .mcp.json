@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "context-mode": {
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": ["C:\\Users\\Jeffe\\.claude\\plugins\\marketplaces\\context-mode\\cli.bundle.mjs"]
+    }
+  }
+}
