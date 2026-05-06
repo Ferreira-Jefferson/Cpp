@@ -19,13 +19,15 @@ int main(void) {
 	::iter(arr, len, print<int>);
 
 	::iter(arr, len, doubleVal<int>);
-
+	
+	std::cout << std::endl;
 	std::cout << "after doubling:" << std::endl;
 	::iter(arr, len, print<int>);
 
 	const std::string strs[] = {"hello", "world", "42"};
 	std::size_t slen = sizeof(strs) / sizeof(strs[0]);
 
+	std::cout << std::endl;
 	std::cout << "const strings:" << std::endl;
 	::iter(strs, slen, print<std::string>);
 
