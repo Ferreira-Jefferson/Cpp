@@ -6,7 +6,6 @@
 
 int main()
 {
-	// Subject example
 	{
 		Span sp = Span(5);
 		sp.addNumber(6);
@@ -18,7 +17,6 @@ int main()
 		std::cout << sp.longestSpan() << std::endl;
 	}
 
-	// Overflow on addNumber
 	{
 		Span sp(2);
 		sp.addNumber(1);
@@ -33,7 +31,6 @@ int main()
 		}
 	}
 
-	// Not enough numbers
 	{
 		Span sp(5);
 		sp.addNumber(42);
@@ -47,7 +44,6 @@ int main()
 		}
 	}
 
-	// Range filling + large test (>= 10000)
 	{
 		const unsigned int N = 25000;
 		Span sp(N);
